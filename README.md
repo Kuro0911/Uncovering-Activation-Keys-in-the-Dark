@@ -9,7 +9,7 @@ The proposed method is validated on six LoRA models, including stylistic, identi
 
 ---
 
-## 🔍 Project Description
+## Project Description
 
 This repository contains code and utilities to reproduce the methodology described in our paper:  
 **"Uncovering Activation Keys in the Dark: Revealing Learned Concepts in LoRA Text-To-Image Models."**
