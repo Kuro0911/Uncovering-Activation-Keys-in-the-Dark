@@ -26,6 +26,8 @@ The core pipeline is divided into:
 ### 1. Evolution + Optimization (Full Pipeline)
 
 ```bash
+pip install -r requirements.txt
+
 python main.py \
   --sd_model "sd-legacy/stable-diffusion-v1-5" \
   --clip_model "openai/clip-vit-large-patch14" \
@@ -64,20 +66,3 @@ python main.py \
 | Emma Watson           | Real Face         | [CivitAI](https://civitai.com)                     |
 | Scarlett Johansson    | Real Face         | [CivitAI](https://civitai.com)                     |
 | Synthetic Identity    | AI-generated Face | [TPDNE](https://this-person-does-not-exist.com/en) |
-
-<!-- ---
-
-## 🔬 Citation
-
-If you use this code or methodology, please cite the following (placeholder until final publication):
-
-```bibtex
-@article{activationkeys2025,
-  title     = {Uncovering Activation Keys in the Dark: Revealing Learned Concepts in LoRA Text-To-Image Models},
-  author    = {Anonymous Authors},
-  journal   = {Neural Information Processing Systems (NeurIPS)},
-  year      = {2025}
-}
-```
-
---- -->
