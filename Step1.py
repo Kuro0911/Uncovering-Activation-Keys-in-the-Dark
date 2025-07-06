@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from nltk.tag import pos_tag
 from nltk.corpus import words, wordnet, brown, stopwords
 from sklearn.decomposition import PCA
+from config import DEVICE, POPULATION_SIZE, MAX_PROMPT_LENGTH, SIMILARITY_TOP_N, NUM_IMAGES_PER_EVAL, SEEDS, LORA_SCALE, MAX_GENERATIONS, NUM_INFERENCE_STEPS
 
 
 nltk.download('words')
@@ -29,10 +30,13 @@ nltk.download('stopwords')
 
 
 class PromptEvolution:
-    def __init__(self, base_pipe, lora_pipe, LORA_PATH):
+    def __init__(self, base_pipe, lora_pipe, clip_model, clip_processor, LORA_PATH):
         self.base_pipe = base_pipe
         self.lora_pipe = lora_pipe
         # self.vocab = self.load_vocab_from_nltk()
+        self.clip_model = clip_model
+        self.clip_processor = clip_processor
+
         self.filtered_vocab = self.load_vocab_from_nltk()
         self.word_frequencies = self.get_word_frequencies()
 
@@ -366,17 +370,19 @@ class PromptEvolution:
             base_images, lora_images = [], []
             tokens = [w.strip() for w in prompt.split(",") if w.strip()]
             prompt_str = ",".join(tokens)
-            for seed in seeds:
+            for seed in SEEDS:
                 generator = torch.Generator(DEVICE).manual_seed(seed)
+
                 # base_images.append(self.base_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator).images[0])
                 # generator = torch.Generator(DEVICE).manual_seed(seed)
                 # lora_images.append(self.lora_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
+
                 (prompt_embeds, negative_prompt_embeds) = self.base_pipe.encode_prompt(
                     prompt_str, DEVICE, num_images_per_prompt=1, do_classifier_free_guidance=True)
                 base_images.append(self.base_pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                   num_inference_steps=num_inference_steps, generator=generator).images[0])
+                                   num_inference_steps=NUM_INFERENCE_STEPS, generator=generator).images[0])
                 lora_images.append(self.lora_pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
-                                   num_inference_steps=num_inference_steps, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
+                                   num_inference_steps=NUM_INFERENCE_STEPS, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
 
             intra_model_consistency_1, base_features = self.calculate_similarity(
                 base_images)
@@ -423,21 +429,21 @@ class PromptEvolution:
             return float("-inf")
 
     def calculate_similarity(self, images):
-        inputs = clip_processor(
+        inputs = self.clip_processor(
             images=images, return_tensors="pt", padding=True)
         inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
         with torch.no_grad():
-            features = clip_model.get_image_features(**inputs)
+            features = self.clip_model.get_image_features(**inputs)
         features = F.normalize(features, dim=-1)
         sim_matrix = features @ features.T
         return sim_matrix.mean().item(), features
 
     def calculate_spread(self, images):
-        inputs = clip_processor(
+        inputs = self.clip_processor(
             images=images, return_tensors="pt", padding=True)
         inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
         with torch.no_grad():
-            features = clip_model.get_image_features(**inputs)
+            features = self.clip_model.get_image_features(**inputs)
         features = F.normalize(features, dim=-1)
         pairwise_dists = pdist(features.cpu().numpy(), metric='cosine')
         return np.mean(pairwise_dists)

@@ -1,0 +1,12 @@
+import torch
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+POPULATION_SIZE = 10
+MAX_PROMPT_LENGTH = 8
+SIMILARITY_TOP_N = 10
+NUM_IMAGES_PER_EVAL = 10
+NUM_INFERENCE_STEPS = 50
+
+seeds = []
+LORA_SCALE = 1
+MAX_GENERATIONS = 10

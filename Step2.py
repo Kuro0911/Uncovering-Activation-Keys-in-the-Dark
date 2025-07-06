@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 
-def run(seeds, prompt, lora_dir):
+def run(seeds, prompt, lora_dir, clip_model):
     def rescale_noise_cfg(noise_cfg, noise_pred_text, guidance_rescale=0.0):
         r"""
         Rescales `noise_cfg` tensor based on `guidance_rescale` to improve image quality and fix overexposure. Based on

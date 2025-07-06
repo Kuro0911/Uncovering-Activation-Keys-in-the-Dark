@@ -50,7 +50,7 @@ def main(args):
     clip_model, clip_processor = setup_clip_model(args.clip_model, DEVICE)
     base_pipe = setup_pipeline(args.sd_model, device=DEVICE)
     lora_pipe = setup_pipeline(
-        args.sd_model, lora_path=args.lora_path, adapter_name=args.adapter_name, device=DEVICE)
+        args.sd_model, lora_path=args.lora_path, adapter_name=args.adapter_name, device=DEVICE, clip_model=clip_model, clip_processor=clip_processor)
 
     # Run evolution
     start_time = time.time()
@@ -75,7 +75,7 @@ def main(args):
     torch.cuda.empty_cache()
 
     # Run next step
-    run(args.seeds, best_prompt, args.lora_path)
+    run(args.seeds, best_prompt, args.lora_path, clip_model)
 
 
 if __name__ == "__main__":
