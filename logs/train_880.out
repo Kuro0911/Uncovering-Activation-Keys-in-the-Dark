@@ -1,0 +1,86 @@
+Job started on xgpg9 at Sat Jul 12 02:29:16 AM +08 2025
+========== GPU Info ==========
+Sat Jul 12 02:29:19 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-PCIE-40GB          Off |   00000000:01:00.0 Off |                    0 |
+| N/A   56C    P0             50W /  250W |       0MiB /  40960MiB |     36%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+==============================
+LD_LIBRARY_PATH set to: /home/d/dhansha/miniconda3/envs/jlab/lib:
+Metadata vocabulary (word, score): [('gigachad', 6.0), ('photo', 1.0833333333333333), ('jeans', 0.5), ('sunglasses', 0.5), ('background.', 0.5), ('brackground', 0.5), ('flexing', 0.5), ('selfie', 0.5), ('backgdound', 0.5), ('tshirt', 0.3333333333333333), ('posing', 0.25), ('bicep', 0.25), ('sideways', 0.125), ('viewer', 0.1), ('background', 0.0661764705882353), ('smiling', 0.05405405405405406), ('pants', 0.05), ('grey', 0.038461538461538464), ('log', 0.027777777777777776), ('shorts', 0.027777777777777776), ('wearing', 0.026041666666666668), ('tank', 0.019230769230769232), ('black', 0.016748366013071895), ('studio', 0.015625), ('standing', 0.0130718954248366), ('neutral', 0.0125), ('shirt', 0.011904761904761904), ('sitting', 0.010309278350515464), ('phone', 0.00909090909090909), ('looking', 0.008620689655172414), ('white', 0.007741347905282331), ('holding', 0.007575757575757576), ('forest', 0.007462686567164179), ('blue', 0.006944444444444444), ('wood', 0.005952380952380952), ('dark', 0.005376344086021506), ('taking', 0.002840909090909091), ('brown', 0.002824858757062147), ('arms', 0.00273224043715847), ('face', 0.0013440860215053765), ('side', 0.0013089005235602095), ('behind', 0.001287001287001287), ('top', 0.0012195121951219512), ('back', 0.0003447087211306446)]
+########################################## GENERATION : 1 / 2 ##########################################
+current pool: 
+['gigachad,textile,sideways,photo,brackground,background.', 'backgdound,sunglasses,black,flexing,who,military,exclusive,tshirt', 'map,wart,parlor,gigachad,incomplete,selfie,faculty,Hamilton', 'gigachad', 'jeans,religious,formation,tragedy,combat,ambiguity,backgdound', 'identification,incapable,advantage,renaissance,O', 'apprentice,sample,gigachad,annual,ambitious,sight', 'sent,conduct,Acts', 'background.,subjective,jeans,sessions,gigachad,Lord,photo,selfie', 'formulation,flavor,selfie,translation,catch']
+intra_model_consistency_1: 0.7272374033927917
+intra_model_consistency_2: 0.7339584231376648
+inter_model_similarity: 0.6175268888473511
+base_spread: 0.3030696267590253
+lora_spread: 0.2956017193670811
+intra_model_consistency_1: 0.6581385731697083
+intra_model_consistency_2: 0.8380546569824219
+inter_model_similarity: 0.6210475564002991
+base_spread: 0.3798460604388282
+lora_spread: 0.17993928446192134
+intra_model_consistency_1: 0.5906111001968384
+intra_model_consistency_2: 0.5931931734085083
+inter_model_similarity: 0.5445374250411987
+base_spread: 0.4548764699419726
+lora_spread: 0.4520075473018157
+intra_model_consistency_1: 0.6812222003936768
+intra_model_consistency_2: 0.8431370854377747
+inter_model_similarity: 0.6435723900794983
+base_spread: 0.3541975316223911
+lora_spread: 0.17429197200219843
+intra_model_consistency_1: 0.6687942147254944
+intra_model_consistency_2: 0.7205846905708313
+inter_model_similarity: 0.5998873710632324
+base_spread: 0.3680063857040109
+lora_spread: 0.31046142896830703
+intra_model_consistency_1: 0.7043395042419434
+intra_model_consistency_2: 0.667461097240448
+inter_model_similarity: 0.6331484913825989
+base_spread: 0.3285116700031498
+lora_spread: 0.36948762312088845
+intra_model_consistency_1: 0.7770205736160278
+intra_model_consistency_2: 0.7693520784378052
+inter_model_similarity: 0.6356196999549866
+base_spread: 0.24775494689541447
+lora_spread: 0.25627535824026004
+intra_model_consistency_1: 0.5882949829101562
+intra_model_consistency_2: 0.604982852935791
+inter_model_similarity: 0.5395348072052002
+base_spread: 0.45744993591475536
+lora_spread: 0.438907955807353
+intra_model_consistency_1: 0.7331706881523132
+intra_model_consistency_2: 0.7416085004806519
+inter_model_similarity: 0.60678631067276
+base_spread: 0.2964770332425943
+lora_spread: 0.2871016036757774
+intra_model_consistency_1: 0.6176376938819885
+intra_model_consistency_2: 0.6109012365341187
+inter_model_similarity: 0.5504669547080994
+base_spread: 0.42484695390180494
+lora_spread: 0.43233197004440344
+Diversity: 10/10
+Resetting word scores
+########################################## GENERATION : 2 / 2 ##########################################
+current pool: 
+['backgdound,sunglasses,black,flexing,who,military,exclusive,tshirt', 'gigachad', 'gigachad', 'plan,conduct,Acts', 'plastics,wart,parlor,gigachad,incomplete,selfie,faculty,Hamilton', 'apprentice,sample,gigachad,annual,ambitious,sight,fifteen', 'gigachad,textile,sideways,photo,brackground,background.,crowd', 'gigachad,religious', 'background.,steady,jeans,sessions,gigachad,Lord,photo,selfie', 'background.,subjective,jeans,sessions,gigachad,Lord,photo,selfie']
+Found in cache: backgdound,sunglasses,black,flexing,who,military,exclusive,tshirt score: 0.5390697736005376
+Found in cache: gigachad score: 0.5045910710461072
+Found in cache: gigachad score: 0.5045910710461072
