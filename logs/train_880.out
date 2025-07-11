@@ -84,3 +84,39 @@ current pool:
 Found in cache: backgdound,sunglasses,black,flexing,who,military,exclusive,tshirt score: 0.5390697736005376
 Found in cache: gigachad score: 0.5045910710461072
 Found in cache: gigachad score: 0.5045910710461072
+intra_model_consistency_1: 0.5786449909210205
+intra_model_consistency_2: 0.5865956544876099
+inter_model_similarity: 0.5118702054023743
+base_spread: 0.46817230142566757
+lora_spread: 0.45933811976976396
+intra_model_consistency_1: 0.677166223526001
+intra_model_consistency_2: 0.7664164304733276
+inter_model_similarity: 0.5835211873054504
+base_spread: 0.358704204654001
+lora_spread: 0.2595372634314645
+intra_model_consistency_1: 0.6747717261314392
+intra_model_consistency_2: 0.8348174095153809
+inter_model_similarity: 0.6156595945358276
+base_spread: 0.361364703160821
+lora_spread: 0.18353619774078925
+intra_model_consistency_1: 0.7997603416442871
+intra_model_consistency_2: 0.8090606331825256
+inter_model_similarity: 0.7323070168495178
+base_spread: 0.2224885088159526
+lora_spread: 0.21215478733638576
+intra_model_consistency_1: 0.568561851978302
+intra_model_consistency_2: 0.8470872044563293
+inter_model_similarity: 0.5611130595207214
+base_spread: 0.47937575014860234
+lora_spread: 0.1699030152844829
+intra_model_consistency_1: 0.7044907808303833
+intra_model_consistency_2: 0.6676167845726013
+inter_model_similarity: 0.5984843969345093
+base_spread: 0.32834357878001075
+lora_spread: 0.36931470568943225
+Found in cache: background.,subjective,jeans,sessions,gigachad,Lord,photo,selfie score: 0.3345841559657976
+Diversity: 9/10
+
+Optimal Prompt: gigachad,religious
+Best Score: 0.6681
+Job finished at Sat Jul 12 02:56:59 AM +08 2025
