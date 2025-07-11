@@ -9,7 +9,7 @@ from diffusers import StableDiffusionPipeline
 from Step1 import PromptEvolution
 from Step2 import run
 
-from config import DEVICE, SEEDS, set_image_model
+from config import DEVICE, SEEDS
 
 def setup_clip_model(model_name, device):
     clip_model = CLIPModel.from_pretrained(model_name).to(device)
@@ -61,7 +61,6 @@ def visualize_images(images, best_prompt, best_score, elapsed_time, output_dir="
 def main(args):
     # Load models
     clip_model, clip_processor = setup_clip_model(args.clip_model, DEVICE)
-    set_image_model(args.sd_model)
     base_pipe = setup_pipeline(args.sd_model, device=DEVICE)
     lora_pipe = setup_pipeline(args.sd_model, lora_path=args.lora_path, adapter_name=args.adapter_name, device=DEVICE)
 

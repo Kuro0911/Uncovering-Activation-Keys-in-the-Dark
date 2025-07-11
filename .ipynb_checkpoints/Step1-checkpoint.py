@@ -384,7 +384,7 @@ class PromptEvolution:
             prompt_str = ",".join(tokens)
             for seed in SEEDS:
                 generator = torch.Generator(DEVICE).manual_seed(seed)
-
+                
                 if IMAGE_MODEL == "stabilityai/stable-diffusion-xl-base-1.0":
                     base_images.append(self.base_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator).images[0])
                     lora_images.append(self.lora_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
@@ -395,7 +395,7 @@ class PromptEvolution:
                                        num_inference_steps=NUM_INFERENCE_STEPS, generator=generator).images[0])
                     lora_images.append(self.lora_pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                        num_inference_steps=NUM_INFERENCE_STEPS, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
-
+            
             intra_model_consistency_1, base_features = self.calculate_similarity(base_images)
             intra_model_consistency_2, lora_features = self.calculate_similarity(lora_images)
 
