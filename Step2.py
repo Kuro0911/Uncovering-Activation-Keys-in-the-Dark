@@ -409,32 +409,29 @@ def run(seeds, prompt, lora_dir, clip_model):
     pils_lora = [transforms.ToPILImage()(image_tensor.squeeze(0))
                  for image_tensor in image_tensors_lora]
 
-    # Show first 5 images
-    ig, axes = plt.subplots(1, 5, figsize=(15, 3))
-    plt.title("Base SD")
-
-    for i, (ax, image) in enumerate(zip(axes, pils_base[:5])):
-        ax.imshow(image)
-        ax.axis('off')  # Turn off axis labels
-
-    ig, axes = plt.subplots(1, 5, figsize=(15, 3))
-    plt.title("LoRA")
-
-    for i, (ax, image) in enumerate(zip(axes, pils_lora[:5])):
-        ax.imshow(image)
-        ax.axis('off')  # Turn off axis labels
-
-    # Show next 5 images
-    ig, axes = plt.subplots(1, 5, figsize=(15, 3))
-    plt.title("Base SD")
-
-    for i, (ax, image) in enumerate(zip(axes, pils_base[5:])):
-        ax.imshow(image)
-        ax.axis('off')  # Turn off axis labels
-
-    ig, axes = plt.subplots(1, 5, figsize=(15, 3))
-    plt.title("LoRA")
-
-    for i, (ax, image) in enumerate(zip(axes, pils_lora[5:])):
-        ax.imshow(image)
-        ax.axis('off')  # Turn off axis labels
+    fig, axes = plt.subplots(4, 5, figsize=(15, 12))
+    fig.suptitle("Step 2 Output", fontsize=16)
+    
+    # row 0: base SD first 5
+    for i in range(5):
+        axes[0, i].imshow(pils_base[i])
+        axes[0, i].axis("off")
+    # row 1: LoRA first 5
+    for i in range(5):
+        axes[1, i].imshow(pils_lora[i])
+        axes[1, i].axis("off")
+    # row 2: base SD next 5
+    for i in range(5):
+        axes[2, i].imshow(pils_base[i + 5])
+        axes[2, i].axis("off")
+    # row 3: LoRA next 5
+    for i in range(5):
+        axes[3, i].imshow(pils_lora[i + 5])
+        axes[3, i].axis("off")
+    
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.92)
+    
+    out_path = os.path.join("results", "step_2_out.png")
+    fig.savefig(out_path, bbox_inches="tight")
+    plt.close(fig)

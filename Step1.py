@@ -3,6 +3,7 @@ import math
 import random
 import os
 import json
+import re
 import numpy as np
 from diffusers import DiffusionPipeline, AutoPipelineForText2Image, StableDiffusionXLPipeline, StableDiffusionPipeline
 from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
@@ -405,8 +406,6 @@ class PromptEvolution:
             base_spread = self.calculate_spread(base_images)
             lora_spread = self.calculate_spread(lora_images)
 
-            print(f"intra_model_consistency_1: {intra_model_consistency_1}")
-            print(f"intra_model_consistency_2: {intra_model_consistency_2}")
             print(f"inter_model_similarity: {inter_model_similarity}")
             print(f"base_spread: {base_spread}")
             print(f"lora_spread: {lora_spread}")
@@ -418,7 +417,9 @@ class PromptEvolution:
             score = -alpha * lora_spread + beta * \
                 (1 - inter_model_similarity) + gamma * base_spread
             score = np.tanh(score)
-
+            
+            print(f"Score : {score}")
+            
             # score = -lora_spread + (1 - inter_model_similarity + base_spread)
 
             for token in tokens:

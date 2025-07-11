@@ -52,11 +52,9 @@ def visualize_images(images, best_prompt, best_score, elapsed_time, output_dir="
         img_path = os.path.join(output_dir, f"image_{i}.png")
         imsave(img_path, img)
 
-    montage_path = os.path.join(output_dir, "montage.png")
+    montage_path = os.path.join(output_dir, "step_1_out.png")
     fig.savefig(montage_path, bbox_inches="tight")
     plt.close(fig)
-
-    print(f"Saved 10 images + montage to '{output_dir}/', and summary to '{txt_path}'.")
            
 def main(args):
     # Load models
