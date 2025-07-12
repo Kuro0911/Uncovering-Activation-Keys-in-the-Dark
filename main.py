@@ -1,15 +1,16 @@
-import argparse
 import time
 import torch
 import gc
+import os
 import matplotlib.pyplot as plt
+from matplotlib.image import imsave
 
 from transformers import CLIPModel, CLIPProcessor
 from diffusers import StableDiffusionPipeline
-from Step1 import PromptEvolution
-from Step2 import run
+from stage1_evolutionary_search import PromptEvolution
+from stage2_gradient_ascent_opt import GradientOptimizer
 
-from config import DEVICE, SEEDS
+from config import DEVICE, SEEDS, IMAGE_MODEL, CLIP_MODEL, LORA_PATH, LORA_ADAPTER_NAME
 
 def setup_clip_model(model_name, device):
     clip_model = CLIPModel.from_pretrained(model_name).to(device)
@@ -56,15 +57,15 @@ def visualize_images(images, best_prompt, best_score, elapsed_time, output_dir="
     fig.savefig(montage_path, bbox_inches="tight")
     plt.close(fig)
            
-def main(args):
+def main():
     # Load models
-    clip_model, clip_processor = setup_clip_model(args.clip_model, DEVICE)
-    base_pipe = setup_pipeline(args.sd_model, device=DEVICE)
-    lora_pipe = setup_pipeline(args.sd_model, lora_path=args.lora_path, adapter_name=args.adapter_name, device=DEVICE)
+    clip_model, clip_processor = setup_clip_model(CLIP_MODEL, DEVICE)
+    base_pipe = setup_pipeline(IMAGE_MODEL, device=DEVICE)
+    lora_pipe = setup_pipeline(IMAGE_MODEL, lora_path=LORA_PATH, adapter_name=LORA_ADAPTER_NAME, device=DEVICE)
 
     # Run evolution
     start_time = time.time()
-    evolver = PromptEvolution(base_pipe, lora_pipe, clip_model, clip_processor, args.lora_path)
+    evolver = PromptEvolution(base_pipe, lora_pipe, clip_model, clip_processor)
     best_prompt, best_score = evolver.run_evolution()
 
     print(f"\nOptimal Prompt: {best_prompt}")
@@ -83,18 +84,9 @@ def main(args):
     gc.collect()
     torch.cuda.empty_cache()
 
-    # # Run next step
-    # run(args.seeds, best_prompt, args.lora_path, clip_model)
-
+    # Run next step
+    optimizer = GradientOptimizer(clip_model)
+    optimizer.run()
+    
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="LoRA Prompt Evolution Runner")
-
-    parser.add_argument("--sd_model", type=str, default="sd-legacy/stable-diffusion-v1-5",
-                        help="Path or repo name of Stable Diffusion model")
-    parser.add_argument("--clip_model", type=str, default="openai/clip-vit-large-patch14", help="Path or repo name of CLIP model")
-    parser.add_argument("--lora_path", type=str, default="lora_weights/Gigachadv1.safetensors", help="Path to the LoRA weights")
-    parser.add_argument("--adapter_name", type=str,default="Gigachadv1", help="Adapter name for LoRA weights")
-
-    args = parser.parse_args()
-    main(args)
+    main()

@@ -5,23 +5,19 @@ import os
 import json
 import re
 import numpy as np
-from diffusers import DiffusionPipeline, AutoPipelineForText2Image, StableDiffusionXLPipeline, StableDiffusionPipeline
-from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
-from transformers import Blip2Processor, Blip2ForConditionalGeneration, BitsAndBytesConfig
-from PIL import Image
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import ImageGrid
-from datasets import load_dataset
 import nltk
+
+import matplotlib.pyplot as plt
+from datasets import load_dataset
 from collections import defaultdict, Counter
-import numpy as np
+
 from sklearn.metrics.pairwise import cosine_similarity
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist
 import torch.nn.functional as F
-from nltk.tag import pos_tag
 from nltk.corpus import words, wordnet, brown, stopwords
 from sklearn.decomposition import PCA
-from config import DEVICE, POPULATION_SIZE, MAX_PROMPT_LENGTH, SIMILARITY_TOP_N, NUM_IMAGES_PER_EVAL, SEEDS, LORA_SCALE, MAX_GENERATIONS, NUM_INFERENCE_STEPS, IMAGE_MODEL
+
+from config import DEVICE, POPULATION_SIZE, MAX_PROMPT_LENGTH, SIMILARITY_TOP_N, NUM_IMAGES_PER_EVAL, SEEDS, LORA_SCALE, LORA_PATH, MAX_GENERATIONS, NUM_INFERENCE_STEPS, IMAGE_MODEL, ALPHA, BETA, GAMMA
 
 nltk.download('words')
 nltk.download('wordnet')
@@ -29,7 +25,7 @@ nltk.download('brown')
 nltk.download('stopwords')
 
 class PromptEvolution:
-    def __init__(self, base_pipe, lora_pipe, clip_model, clip_processor, LORA_PATH):
+    def __init__(self, base_pipe, lora_pipe, clip_model, clip_processor):
         self.base_pipe = base_pipe
         self.lora_pipe = lora_pipe
         # self.vocab = self.load_vocab_from_nltk()
@@ -410,12 +406,9 @@ class PromptEvolution:
             print(f"base_spread: {base_spread}")
             print(f"lora_spread: {lora_spread}")
 
-            alpha = 1.5
-            beta = 1
-            gamma = 1.3
-
-            score = -alpha * lora_spread + beta * \
-                (1 - inter_model_similarity) + gamma * base_spread
+            score = -ALPHA * lora_spread + BETA * \
+                (1 - inter_model_similarity) + GAMMA * base_spread
+            
             score = np.tanh(score)
             
             print(f"Score : {score}")
