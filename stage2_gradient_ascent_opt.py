@@ -41,7 +41,7 @@ class GradientOptimizer:
         self.num_inference_steps   = STEP2_NUM_INFERENCE_STEPS
     
         self.num_images_per_prompt    = STEP2_NUM_IMAGES_PER_PROMPT
-        self.do_classifier_free       = STEP2_DO_CLASSIFIER_FREE
+        self.do_classifier_free_guidance       = STEP2_DO_CLASSIFIER_FREE
         self.negative_prompt          = STEP2_NEGATIVE_PROMPT
 
         self.pipeline_base = self.init_pipeline_base()
@@ -210,20 +210,20 @@ class GradientOptimizer:
 
         return clip_embeddings
 
-    # def calculate_similarity(self, image_tensors):
-    #     processed = [self.process_img(image_tensor)
-    #                  for image_tensor in image_tensors]
-    #     processed = torch.cat(processed)
+    def calculate_similarity(self, image_tensors):
+        processed = [self.process_img(image_tensor)
+                     for image_tensor in image_tensors]
+        processed = torch.cat(processed)
 
-    #     # Get normalized image features with gradient tracking
-    #     features = self.clip_model.get_image_features(pixel_values=processed)
-    #     features = F.normalize(features, dim=-1)  # Shape: [B, D]
+        # Get normalized image features with gradient tracking
+        features = self.clip_model.get_image_features(pixel_values=processed)
+        features = F.normalize(features, dim=-1)  # Shape: [B, D]
 
-    #     # Compute similarity matrix
-    #     sim_matrix = features @ features.T  # Gradient will flow through this
+        # Compute similarity matrix
+        sim_matrix = features @ features.T  # Gradient will flow through this
 
-    #     # Ensure mean() is used instead of .item() to allow gradients
-    #     return sim_matrix.mean(), features
+        # Ensure mean() is used instead of .item() to allow gradients
+        return sim_matrix.mean(), features
 
     def calculate_spread(self, image_tensors):
         # Process entire batch at once (maintains gradients)
@@ -374,16 +374,18 @@ class GradientOptimizer:
         # Generate results
         print(f"Best objective value: {best_objective_value}")
     
-        plt.figure(figsize=(15, 5))
-        plt.plot(range(self.num_optimization_steps), objective_history, marker='o')
-        plt.xlabel("Iteration")
-        plt.ylabel("Objective Value")
-        plt.title("Objective Value over Time")
-        plt.grid(True)
-        plt.show()
+        fig, ax = plt.subplots(figsize=(15, 5))
+        ax.plot(range(self.num_optimization_steps), objective_history, marker='o')
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Objective Value")
+        ax.set_title("Objective Value over Time")
+        ax.grid(True)
+        
+        history_path = os.path.join("results", "step2_objective_history.png")
+        fig.savefig(history_path, bbox_inches="tight")
+        plt.close(fig)
     
-        prompt_embeds = self.get_text_embedding(
-            best_context_condition, best_context_uncondition, SOS_token)
+        prompt_embeds = self.get_text_embedding(best_context_condition, best_context_uncondition, SOS_token)
     
         image_tensors_base = []
         for j in range(self.num_images):
@@ -417,30 +419,27 @@ class GradientOptimizer:
                      for image_tensor in image_tensors_base]
         pils_lora = [transforms.ToPILImage()(image_tensor.squeeze(0))
                      for image_tensor in image_tensors_lora]
-    
-        fig, axes = plt.subplots(4, 5, figsize=(15, 12))
-        fig.suptitle("Step 2 Output", fontsize=16)
+            
+        fig, axes = plt.subplots(2, len(pils_base), figsize=(15, 6))
+        fig.suptitle(f"Step 2 Output -> Best Objective: {best_objective_value:.4f}", fontsize=16)
         
-        # row 0: base SD first 5
-        for i in range(5):
-            axes[0, i].imshow(pils_base[i])
+        axes[0, 0].text(-0.1, 0.5, "Base SD", transform=axes[0,0].transAxes,
+                        fontsize=14, fontweight="bold", va="center")
+        axes[1, 0].text(-0.1, 0.5, "LoRA",    transform=axes[1,0].transAxes,
+                        fontsize=14, fontweight="bold", va="center")
+        
+        for i, img in enumerate(pils_base):
+            axes[0, i].imshow(img)
             axes[0, i].axis("off")
-        # row 1: LoRA first 5
-        for i in range(5):
-            axes[1, i].imshow(pils_lora[i])
+        
+        for i, img in enumerate(pils_lora):
+            axes[1, i].imshow(img)
             axes[1, i].axis("off")
-        # row 2: base SD next 5
-        for i in range(5):
-            axes[2, i].imshow(pils_base[i + 5])
-            axes[2, i].axis("off")
-        # row 3: LoRA next 5
-        for i in range(5):
-            axes[3, i].imshow(pils_lora[i + 5])
-            axes[3, i].axis("off")
         
         plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
+        plt.subplots_adjust(top=0.88, left=0.15)
         
         out_path = os.path.join("results", "step_2_out.png")
         fig.savefig(out_path, bbox_inches="tight")
         plt.close(fig)
+        
