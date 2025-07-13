@@ -12,10 +12,12 @@ from stage2_gradient_ascent_opt import GradientOptimizer
 
 from config import DEVICE, SEEDS, IMAGE_MODEL, CLIP_MODEL, LORA_PATH, LORA_ADAPTER_NAME, SEEDS
 
+
 def setup_clip_model(model_name, device):
     clip_model = CLIPModel.from_pretrained(model_name).to(device)
     clip_processor = CLIPProcessor.from_pretrained(model_name)
     return clip_model, clip_processor
+
 
 def setup_pipeline(model_name, lora_path=None, adapter_name=None, device="cuda"):
     pipe = StableDiffusionPipeline.from_pretrained(
@@ -30,6 +32,7 @@ def setup_pipeline(model_name, lora_path=None, adapter_name=None, device="cuda")
             lora_path, weight_name=adapter_name, adapter_name=adapter_name)
         pipe.set_adapters([adapter_name])
     return pipe
+
 
 def visualize_images(images, best_prompt, best_score, elapsed_time, output_dir="results"):
     os.makedirs(output_dir, exist_ok=True)
@@ -50,22 +53,21 @@ def visualize_images(images, best_prompt, best_score, elapsed_time, output_dir="
         axes[row, col].imshow(img)
         axes[row, col].axis("off")
 
-        img_path = os.path.join(output_dir, f"image_{i}.png")
-        imsave(img_path, img)
-
     montage_path = os.path.join(output_dir, "step_1_out.png")
     fig.savefig(montage_path, bbox_inches="tight")
     plt.close(fig)
-           
+
+
 def main():
     # Load models
     print("-"*45)
     print(f"SEEDS: {SEEDS}")
     print("-"*45)
-    
+
     clip_model, clip_processor = setup_clip_model(CLIP_MODEL, DEVICE)
     base_pipe = setup_pipeline(IMAGE_MODEL, device=DEVICE)
-    lora_pipe = setup_pipeline(IMAGE_MODEL, lora_path=LORA_PATH, adapter_name=LORA_ADAPTER_NAME, device=DEVICE)
+    lora_pipe = setup_pipeline(
+        IMAGE_MODEL, lora_path=LORA_PATH, adapter_name=LORA_ADAPTER_NAME, device=DEVICE)
 
     # Run evolution
     start_time = time.time()
@@ -76,7 +78,8 @@ def main():
     print(f"Best Score: {best_score:.4f}")
 
     # Generate images
-    generated_images = [lora_pipe(best_prompt, num_inference_steps=30).images[0] for _ in range(10)]
+    generated_images = [
+        lora_pipe(best_prompt, num_inference_steps=30).images[0] for _ in range(10)]
 
     # Visualize
     elapsed_time = time.strftime(
@@ -87,11 +90,12 @@ def main():
     del lora_pipe, base_pipe
     gc.collect()
     torch.cuda.empty_cache()
-    
+
     # Run next step (if SD-1.5)
     if IMAGE_MODEL == "sd-legacy/stable-diffusion-v1-5":
         optimizer = GradientOptimizer(clip_model)
         optimizer.run(best_prompt)
-    
+
+
 if __name__ == "__main__":
     main()
