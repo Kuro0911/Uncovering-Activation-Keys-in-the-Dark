@@ -2,3 +2,4 @@ lora_weights/
 __pycache__/
 logs/
 .ipynb_checkpoints/
+results/

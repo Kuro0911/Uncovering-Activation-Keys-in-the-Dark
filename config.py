@@ -19,17 +19,17 @@ MAX_GENERATIONS = 10                                                  # number o
 POPULATION_SIZE = 16                                                  # number of prompts in each generation
 MAX_PROMPT_LENGTH = 8                                                 # maximum number of tokens per prompt
 SIMILARITY_TOP_N = 3000                                               # number of nearest neighbors when exploring similar words
-NUM_IMAGES_PER_EVAL = 10                                               # number of images generated per prompt evaluation
+NUM_IMAGES_PER_EVAL = 10                                              # number of images generated per prompt evaluation
 SEEDS = [random.randint(0, 2**32) for _ in range(NUM_IMAGES_PER_EVAL)]  # random seeds for reproducible image sampling
 
 NUM_INFERENCE_STEPS = 25                                               # number of diffusion timesteps for Stage 1
 
 # for step 2 (gradient ascent optimization)
 STEP2_NUM_OPTIM_STEPS = 150                                           # number of gradient‐based optimization iterations
-STEP2_NUM_IMAGES = 5                                                  # number of images to generate per iteration
+STEP2_NUM_IMAGES = NUM_IMAGES_PER_EVAL                                # number of images to generate per iteration
 STEP2_LR = 1e-4                                                       # learning rate for embedding optimizers
 STEP2_GUIDANCE_SCALE = 7.5                                            # classifier-free guidance strength for Stage 2
 STEP2_NUM_INFERENCE_STEPS = 25                                        # diffusion timesteps for Stage 2 denoising
-STEP2_NUM_IMAGES_PER_PROMPT = 1                                        # images per prompt encoding call
+STEP2_NUM_IMAGES_PER_PROMPT = 1                                       # images per prompt encoding call
 STEP2_DO_CLASSIFIER_FREE = True                                       # whether to use classifier-free guidance
 STEP2_NEGATIVE_PROMPT = None                                          # negative prompt text to suppress unwanted content
