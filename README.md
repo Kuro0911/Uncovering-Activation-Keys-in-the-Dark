@@ -164,3 +164,7 @@ Check these artifacts to verify that the recovered activation key indeed elicits
 | Emma Watson           | Real Face         | [CivitAI](https://civitai.com)                     |
 | Scarlett Johansson    | Real Face         | [CivitAI](https://civitai.com)                     |
 | Synthetic Identity    | AI-generated Face | [TPDNE](https://this-person-does-not-exist.com/en) |
+
+> ⚠️ **Note**: Due to new government regulations and pressure from Mastercard and Visa, CivitAI has removed many LoRA models—especially those involving real identities like celebrities from public access. However, these models can still be downloaded **for testing purposes only** from the following archive: [ALL_MODELS](https://drive.google.com/drive/folders/1gczVTPi9C1AO9X_5lZ670Xrg0V8WHYzp?usp=sharing).
+
+> Read more about this policy change here: [Unite.AI Article](https://www.unite.ai/civitai-tightens-deepfake-rules-under-pressure-from-mastercard-and-visa/)
