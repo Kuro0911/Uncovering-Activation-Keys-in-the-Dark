@@ -1,48 +1,46 @@
 import os
-
-from transformers import CLIPProcessor, CLIPModel
-from diffusers import StableDiffusionPipeline
 import torch
 import torchvision
 import torch.optim as optim
-from torch.utils.checkpoint import checkpoint
-from tqdm.auto import tqdm
-
-from torchvision import transforms
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
+from tqdm.auto import tqdm
+from diffusers import StableDiffusionPipeline
+from torchvision import transforms
 
 from config import (
-  DEVICE,
-  SEEDS,
-  LORA_PATH,
-  STEP2_NUM_OPTIM_STEPS,
-  STEP2_NUM_IMAGES,
-  STEP2_LR,
-  STEP2_GUIDANCE_SCALE,
-  STEP2_NUM_INFERENCE_STEPS,
-  STEP2_NUM_IMAGES_PER_PROMPT,
-  STEP2_DO_CLASSIFIER_FREE,
-  STEP2_NEGATIVE_PROMPT,
-  ALPHA,
-  BETA,
-  GAMMA
+    DEVICE,
+    SEEDS,
+    LORA_PATH,
+    STEP2_NUM_OPTIM_STEPS,
+    STEP2_NUM_IMAGES,
+    STEP2_LR,
+    STEP2_GUIDANCE_SCALE,
+    STEP2_NUM_INFERENCE_STEPS,
+    STEP2_NUM_IMAGES_PER_PROMPT,
+    STEP2_DO_CLASSIFIER_FREE,
+    STEP2_NEGATIVE_PROMPT,
+    ALPHA,
+    BETA,
+    GAMMA
 )
+
 
 class GradientOptimizer:
     def __init__(self, clip_model):
-    
-        self.device          = DEVICE
-        self.lora_path       = LORA_PATH
+
+        self.device = DEVICE
+        self.lora_path = LORA_PATH
         self.num_optimization_steps = STEP2_NUM_OPTIM_STEPS
-        self.num_images      = STEP2_NUM_IMAGES
-        self.learning_rate   = STEP2_LR
-        self.guidance_scale  = STEP2_GUIDANCE_SCALE
-        self.num_inference_steps   = STEP2_NUM_INFERENCE_STEPS
-    
-        self.num_images_per_prompt    = STEP2_NUM_IMAGES_PER_PROMPT
-        self.do_classifier_free_guidance       = STEP2_DO_CLASSIFIER_FREE
-        self.negative_prompt          = STEP2_NEGATIVE_PROMPT
+        self.num_images = STEP2_NUM_IMAGES
+        self.learning_rate = STEP2_LR
+        self.guidance_scale = STEP2_GUIDANCE_SCALE
+        self.num_inference_steps = STEP2_NUM_INFERENCE_STEPS
+
+        self.num_images_per_prompt = STEP2_NUM_IMAGES_PER_PROMPT
+        self.do_classifier_free_guidance = STEP2_DO_CLASSIFIER_FREE
+        self.negative_prompt = STEP2_NEGATIVE_PROMPT
 
         self.pipeline_base = self.init_pipeline_base()
         self.pipeline_lora = self.init_pipeline_lora()
@@ -52,7 +50,7 @@ class GradientOptimizer:
         # Prepare timesteps
         self.scheduler_base = self.pipeline_base.scheduler
         self.scheduler_lora = self.pipeline_lora.scheduler
-        
+
     def rescale_noise_cfg(self, noise_cfg, noise_pred_text, guidance_rescale=0.0):
         r"""
         Rescales `noise_cfg` tensor based on `guidance_rescale` to improve image quality and fix overexposure. Based on
@@ -248,7 +246,7 @@ class GradientOptimizer:
         mean_spread = upper_triangle.mean()
 
         return mean_spread
-    
+
     def run(self, prompt):
         # Encode prompt
         prompt_embeds, negative_prompt_embeds = self.pipeline_base.encode_prompt(
@@ -258,26 +256,27 @@ class GradientOptimizer:
             self.do_classifier_free_guidance,
             self.negative_prompt
         )
-    
+
         # Retrieve the SOS token, the condition, and uncondition
         SOS_token = prompt_embeds[:, 0, :]
         context_condition = torch.nn.Parameter(prompt_embeds[:, 1:, :])
-        context_uncondition = torch.nn.Parameter(negative_prompt_embeds[:, 1:, :])
-    
+        context_uncondition = torch.nn.Parameter(
+            negative_prompt_embeds[:, 1:, :])
+
         # We want to optimise the context_condition and context_uncondition
         # (the prompt_embedding and negative_prompt_embedding without the SOS token)
         context_condition.requires_grad_(True)
         context_uncondition.requires_grad_(True)
-    
+
         # Setup optimizer for the embedding
         optimizer = optim.Adam(
             [context_condition, context_uncondition], lr=self.learning_rate)
-    
+
         # Prepare latent variables
         batch_size = 1
         # spatial dimension of 64x64 (for 512x512 output images)
         latent_shape = (1, 4, 64, 64)
-    
+
         # Initialise CLIPModel
         # model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
         # model.to(self.device)
@@ -286,13 +285,13 @@ class GradientOptimizer:
         best_objective_value = float('-inf')
         best_context_condition = None
         best_context_uncondition = None
-    
+
         # Starting iteration
         start_iteration = 0
-    
+
         # Initialise a list to store objective values over iterations
         objective_history = []
-    
+
         init_latents_base = []
         init_latents_lora = []
         for seed in SEEDS:
@@ -302,62 +301,66 @@ class GradientOptimizer:
                 latent_shape, generator=generator_base, device=self.device))
             init_latents_lora.append(torch.randn(
                 latent_shape, generator=generator_lora, device=self.device))
-    
+
         for iter in range(start_iteration, self.num_optimization_steps):
             optimizer.zero_grad()
-    
+
             # get prompt embeddings using optimised context_condition and context_uncondition
             prompt_embeds = self.get_text_embedding(
                 context_condition, context_uncondition, SOS_token)
-    
+
             # Generate num_images image tensor for base SD model
             image_tensors_base = []
             for j in range(self.num_images):
                 # The initial latent (which is the initial noise) is copmuted to be used for every image generation
                 init_latent_base = init_latents_base[j].clone()
-    
+
                 # Prepare timesteps
-                self.scheduler_base.set_timesteps(self.num_inference_steps, device=self.device)
+                self.scheduler_base.set_timesteps(
+                    self.num_inference_steps, device=self.device)
                 timesteps_base = self.scheduler_base.timesteps
-    
+
                 latents_base = self.do_denoise(self.pipeline_base, scheduler=self.scheduler_base, timesteps=timesteps_base,
-                                          latents=init_latent_base, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
-                image_tensor_base = self.latent2img_tensor(latents_base, self.pipeline_base)
+                                               latents=init_latent_base, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
+                image_tensor_base = self.latent2img_tensor(
+                    latents_base, self.pipeline_base)
                 image_tensors_base.append(image_tensor_base)
-    
+
             # Generate num_images image tensor for LoRA model
             image_tensors_lora = []
             for j in range(self.num_images):
                 # The initial latent (which is the initial noise) is copmuted to be used for every image generation
                 init_latent_lora = init_latents_lora[j].clone()
-    
+
                 # Prepare timesteps
-                self.scheduler_lora.set_timesteps(self.num_inference_steps, device=self.device)
+                self.scheduler_lora.set_timesteps(
+                    self.num_inference_steps, device=self.device)
                 timesteps_lora = self.scheduler_lora.timesteps
-    
+
                 latents_lora = self.do_denoise(self.pipeline_lora, scheduler=self.scheduler_lora, timesteps=timesteps_lora,
-                                          latents=init_latent_lora, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
-                image_tensor_lora = self.latent2img_tensor(latents_lora, self.pipeline_lora)
+                                               latents=init_latent_lora, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
+                image_tensor_lora = self.latent2img_tensor(
+                    latents_lora, self.pipeline_lora)
                 image_tensors_lora.append(image_tensor_lora)
-    
+
             # Calculating score
             intra_model_consistency_1, base_features = self.calculate_similarity(
                 image_tensors_base)
             intra_model_consistency_2, lora_features = self.calculate_similarity(
                 image_tensors_lora)
-    
+
             sim_matrix = base_features @ lora_features.T
             inter_model_similarity = sim_matrix.mean()
-    
+
             base_spread = self.calculate_spread(image_tensors_base)
             lora_spread = self.calculate_spread(image_tensors_lora)
-    
+
             objective_value = -ALPHA * lora_spread + BETA * \
                 (1 - inter_model_similarity) + GAMMA * base_spread
             objective_value = torch.tanh(objective_value)
-    
+
             objective_history.append(objective_value.item())
-    
+
             # Update best values and save images if current objective is better
             if objective_value.item() > best_objective_value:
                 print(
@@ -365,81 +368,87 @@ class GradientOptimizer:
                 best_objective_value = objective_value.item()
                 best_context_condition = context_condition.detach().clone()
                 best_context_uncondition = context_uncondition.detach().clone()
-    
+
             # Back propagation & Gradient descent
             # We want to maximise (S_intra - S_inter). Gradient descent minimises loss function
             (-objective_value).backward()
             optimizer.step()
-    
+
         # Generate results
         print(f"Best objective value: {best_objective_value}")
-    
+
         fig, ax = plt.subplots(figsize=(15, 5))
-        ax.plot(range(self.num_optimization_steps), objective_history, marker='o')
+        ax.plot(range(self.num_optimization_steps),
+                objective_history, marker='o')
         ax.set_xlabel("Iteration")
         ax.set_ylabel("Objective Value")
         ax.set_title("Objective Value over Time")
         ax.grid(True)
-        
+
         history_path = os.path.join("results", "step2_objective_history.png")
         fig.savefig(history_path, bbox_inches="tight")
         plt.close(fig)
-    
-        prompt_embeds = self.get_text_embedding(best_context_condition, best_context_uncondition, SOS_token)
-    
+
+        prompt_embeds = self.get_text_embedding(
+            best_context_condition, best_context_uncondition, SOS_token)
+
         image_tensors_base = []
         for j in range(self.num_images):
             # The initial latent (which is the initial noise) is copmuted to be used for every image generation
             init_latent_base = init_latents_base[j].clone()
-    
+
             # Prepare timesteps
-            self.scheduler_base.set_timesteps(self.num_inference_steps, device=self.device)
+            self.scheduler_base.set_timesteps(
+                self.num_inference_steps, device=self.device)
             timesteps_base = self.scheduler_base.timesteps
-    
+
             latents_base = self.do_denoise(self.pipeline_base, scheduler=self.scheduler_base, timesteps=timesteps_base,
-                                      latents=init_latent_base, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
-            image_tensor_base = self.latent2img_tensor(latents_base, self.pipeline_base)
+                                           latents=init_latent_base, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
+            image_tensor_base = self.latent2img_tensor(
+                latents_base, self.pipeline_base)
             image_tensors_base.append(image_tensor_base)
-    
+
         image_tensors_lora = []
         for j in range(self.num_images):
             # The initial latent (which is the initial noise) is copmuted to be used for every image generation
             init_latent_lora = init_latents_lora[j].clone()
-    
+
             # Prepare timesteps
-            self.scheduler_lora.set_timesteps(self.num_inference_steps, device=self.device)
+            self.scheduler_lora.set_timesteps(
+                self.num_inference_steps, device=self.device)
             timesteps_lora = self.scheduler_lora.timesteps
-    
+
             latents_lora = self.do_denoise(self.pipeline_lora, scheduler=self.scheduler_lora, timesteps=timesteps_lora,
-                                      latents=init_latent_lora, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
-            image_tensor_lora = self.latent2img_tensor(latents_lora, self.pipeline_lora)
+                                           latents=init_latent_lora, prompt_embeds=prompt_embeds, guidance_scale=self.guidance_scale)
+            image_tensor_lora = self.latent2img_tensor(
+                latents_lora, self.pipeline_lora)
             image_tensors_lora.append(image_tensor_lora)
-    
+
         pils_base = [transforms.ToPILImage()(image_tensor.squeeze(0))
                      for image_tensor in image_tensors_base]
         pils_lora = [transforms.ToPILImage()(image_tensor.squeeze(0))
                      for image_tensor in image_tensors_lora]
-            
+
         fig, axes = plt.subplots(2, len(pils_base), figsize=(15, 6))
-        fig.suptitle(f"Step 2 Output -> Best Objective: {best_objective_value:.4f}", fontsize=16)
-        
-        axes[0, 0].text(-0.1, 0.5, "Base SD", transform=axes[0,0].transAxes,
+        fig.suptitle(
+            f"Step 2 Output -> Best Objective: {best_objective_value:.4f}", fontsize=16)
+
+        axes[0, 0].text(-0.1, 0.5, "Base SD", transform=axes[0, 0].transAxes,
                         fontsize=14, fontweight="bold", va="center")
-        axes[1, 0].text(-0.1, 0.5, "LoRA",    transform=axes[1,0].transAxes,
+        axes[1, 0].text(-0.1, 0.5, "LoRA",    transform=axes[1, 0].transAxes,
                         fontsize=14, fontweight="bold", va="center")
-        
+
         for i, img in enumerate(pils_base):
             axes[0, i].imshow(img)
             axes[0, i].axis("off")
-        
+
         for i, img in enumerate(pils_lora):
             axes[1, i].imshow(img)
             axes[1, i].axis("off")
-        
+
         plt.tight_layout()
         plt.subplots_adjust(top=0.88, left=0.15)
-        
+
         out_path = os.path.join("results", "step_2_out.png")
         fig.savefig(out_path, bbox_inches="tight")
         plt.close(fig)
-        

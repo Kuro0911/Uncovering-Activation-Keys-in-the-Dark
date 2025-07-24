@@ -8,12 +8,12 @@ import numpy as np
 import nltk
 
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
+
 from datasets import load_dataset
 from collections import defaultdict, Counter
-
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import pdist
-import torch.nn.functional as F
 from nltk.corpus import words, wordnet, brown, stopwords
 from sklearn.decomposition import PCA
 
@@ -23,6 +23,7 @@ nltk.download('words')
 nltk.download('wordnet')
 nltk.download('brown')
 nltk.download('stopwords')
+
 
 class PromptEvolution:
     def __init__(self, base_pipe, lora_pipe, clip_model, clip_processor):
@@ -342,29 +343,30 @@ class PromptEvolution:
         random.shuffle(remaining)
         combined += remaining[:MAX_PROMPT_LENGTH - len(combined)]
         return ",".join(combined)
-    
+
     def show_images(self, prompt_str, score, base_images, lora_images, generation, output_dir: str = "results"):
         gen_folder = os.path.join(output_dir, f"generation_{generation}")
         os.makedirs(gen_folder, exist_ok=True)
 
         fig, axes = plt.subplots(2, NUM_IMAGES_PER_EVAL, figsize=(15, 6))
-        fig.suptitle(f"Gen {generation} | Prompt: {prompt_str} | Score: {score:.2f}", fontsize=12)
-    
+        fig.suptitle(
+            f"Gen {generation} | Prompt: {prompt_str} | Score: {score:.2f}", fontsize=12)
+
         for i in range(NUM_IMAGES_PER_EVAL):
             axes[0, i].imshow(base_images[i])
             axes[0, i].axis("off")
             axes[1, i].imshow(lora_images[i])
             axes[1, i].axis("off")
 
-        slug = re.sub(r'[^0-9A-Za-z]+', '_', prompt_str)   
-        slug = re.sub(r'_+', '_', slug)                  
-        slug = slug.strip('_').lower()                    
+        slug = re.sub(r'[^0-9A-Za-z]+', '_', prompt_str)
+        slug = re.sub(r'_+', '_', slug)
+        slug = slug.strip('_').lower()
         if len(slug) > 80:
             slug = slug[:80].rstrip('_')
-            
+
         filename = f"{slug}.png"
         save_path = os.path.join(gen_folder, filename)
-    
+
         fig.savefig(save_path, bbox_inches="tight")
         plt.close(fig)
 
@@ -381,10 +383,12 @@ class PromptEvolution:
             prompt_str = ",".join(tokens)
             for seed in SEEDS:
                 generator = torch.Generator(DEVICE).manual_seed(seed)
-                
+
                 if IMAGE_MODEL == "stabilityai/stable-diffusion-xl-base-1.0":
-                    base_images.append(self.base_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator).images[0])
-                    lora_images.append(self.lora_pipe(prompt_str, num_inference_steps=num_inference_steps, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
+                    base_images.append(self.base_pipe(
+                        prompt_str, num_inference_steps=NUM_INFERENCE_STEPS, generator=generator).images[0])
+                    lora_images.append(self.lora_pipe(prompt_str, num_inference_steps=NUM_INFERENCE_STEPS,
+                                       generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
                 elif IMAGE_MODEL == "sd-legacy/stable-diffusion-v1-5":
                     (prompt_embeds, negative_prompt_embeds) = self.base_pipe.encode_prompt(
                         prompt_str, DEVICE, num_images_per_prompt=1, do_classifier_free_guidance=True)
@@ -392,9 +396,11 @@ class PromptEvolution:
                                        num_inference_steps=NUM_INFERENCE_STEPS, generator=generator).images[0])
                     lora_images.append(self.lora_pipe(prompt_embeds=prompt_embeds, negative_prompt_embeds=negative_prompt_embeds,
                                        num_inference_steps=NUM_INFERENCE_STEPS, generator=generator, cross_attention_kwargs={"scale": LORA_SCALE}).images[0])
-            
-            intra_model_consistency_1, base_features = self.calculate_similarity(base_images)
-            intra_model_consistency_2, lora_features = self.calculate_similarity(lora_images)
+
+            intra_model_consistency_1, base_features = self.calculate_similarity(
+                base_images)
+            intra_model_consistency_2, lora_features = self.calculate_similarity(
+                lora_images)
 
             sim_matrix = base_features @ lora_features.T
             inter_model_similarity = sim_matrix.mean().item()
@@ -408,17 +414,18 @@ class PromptEvolution:
 
             score = -ALPHA * lora_spread + BETA * \
                 (1 - inter_model_similarity) + GAMMA * base_spread
-            
+
             score = np.tanh(score)
-            
+
             print(f"Score : {score}")
-            
+
             # score = -lora_spread + (1 - inter_model_similarity + base_spread)
 
             for token in tokens:
                 self.word_scores[token] += score
-                
-            self.show_images(prompt_str, score, base_images, lora_images, generation)
+
+            self.show_images(prompt_str, score, base_images,
+                             lora_images, generation)
 
             if score > self.all_time_best['score']:
                 self.all_time_best = {'score': score, 'prompt': prompt}
@@ -461,11 +468,13 @@ class PromptEvolution:
 
         try:
             for generation in range(MAX_GENERATIONS):
-                print( "#"*40 + f"GENERATION : {generation + 1} / {MAX_GENERATIONS} " + "#"*40)
+                print(
+                    "#"*40 + f"GENERATION : {generation + 1} / {MAX_GENERATIONS} " + "#"*40)
                 print("current pool: ")
                 print(self.population)
 
-                scores = [self.evaluate_prompt(p, generation) for p in self.population]
+                scores = [self.evaluate_prompt(
+                    p, generation) for p in self.population]
 
                 unique_prompts = len(set(self.population))
                 diversity_history.append(unique_prompts)
